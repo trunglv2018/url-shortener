@@ -3,7 +3,6 @@ package handlers
 import (
 	"net/http"
 
-	"url-shortener/model"
 	"url-shortener/storages"
 )
 
@@ -12,8 +11,8 @@ func EncodeHandler(storage storages.IStorage) http.Handler {
 		if url := r.PostFormValue("url"); url != "" {
 			w.Write([]byte(storage.Save(url)))
 		}
-		var shortenLink = new(model.ShortLink)
-		shortenLink.Create()
+		// var shortenLink = new(model.ShortLink)
+		// shortenLink.Create()
 	}
 
 	return http.HandlerFunc(handleFunc)

@@ -1,30 +1,19 @@
-FROM golang:1.16-alpine
 
-# Set destination for COPY
-WORKDIR /app
+# builder image
+FROM golang:1.13-alpine3.11 as builder
+RUN mkdir /build
+ADD . /build/
+WORKDIR /build
+RUN CGO_ENABLED=0 GOOS=linux go build -a -o url-shortener .
 
-# Download Go modules
-COPY go.mod .
-COPY go.sum .
-RUN go mod download
 
-# Copy the source code. Note the slash at the end, as explained in
-# https://docs.docker.com/engine/reference/builder/#copy
-COPY *.go ./
+# generate clean, final image for end users
+FROM alpine:3.11.3
+COPY --from=builder /build/url-shortener .
+COPY --from=builder /build/config.yaml .
 
-# Build
-RUN go build 
+# executable
+EXPOSE 8000
 
-# This is for documentation purposes only.
-# To actually open the port, runtime parameters
-# must be supplied to the docker command.
-EXPOSE 8080
-
-# (Optional) environment variable that our dockerised
-# application can make use of. The value of environment
-# variables can also be set via parameters supplied
-# to the docker command on the command line.
-#ENV HTTP_PORT=8081
-
-# Run
-CMD [ "/url-shortener" ]
+# Run Executable
+CMD ["./url-shortener"]
