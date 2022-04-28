@@ -14,7 +14,7 @@ var logr = logrus.New()
 
 func init() {
 	initConfig()
-	// initDB()
+	initDB()
 }
 func initConfig() {
 	var err error
