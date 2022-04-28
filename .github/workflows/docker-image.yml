@@ -15,4 +15,8 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag trunglv:$(date +%s)
+      run: |
+        echo "building docker"
+        docker build . --file Dockerfile --tag trunglv:latest
+        docker run -d --name trunglv . --file Dockerfile --tag trunglv:latest
+        echo "finish building"

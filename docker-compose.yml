@@ -1,0 +1,17 @@
+version: '3.9'
+services:
+  arangodb:
+    image: arangodb/arangodb:3.9.1
+    container_name: arangodb
+    restart: always
+    environment:
+      ARANGO_ROOT_PASSWORD: openSesame
+    # volumes:
+    #   - docker/database:/var/lib/mysql
+  app:
+    container_name: url_shortener
+    build: .
+    volumes:
+      - .:/build
+    ports:
+      - "8080:8000"
