@@ -7,3 +7,6 @@ arrango_db:
   uname: root
   password: openSesame
   db: shortenlink
+  tables:
+    - url
+    - log

@@ -19,6 +19,7 @@ func NewApi(routerGroup *gin.RouterGroup) *Api {
 	s.POST("url/shorten", s.shortenLink)
 	s.POST("url/decode", s.shortenLink)
 	s.GET("url/list", s.listLink)
+	s.GET("url/detail", s.getLinkDetail)
 	s.POST("url/redirect", s.shortenLink)
 	//customer api
 
@@ -33,12 +34,17 @@ func (s *Api) shortenLink(c *gin.Context) {
 }
 
 func (s *Api) listLink(c *gin.Context) {
-	// var code = c.Query("code")
 	var urls, err = new(model.Link).GetAll()
 	rest.AssertNil(err)
 	s.SendData(c, urls)
 }
 
+func (s *Api) getLinkDetail(c *gin.Context) {
+	var code = c.Query("code")
+	var urls, err = new(model.Link).GetByCode(code)
+	rest.AssertNil(err)
+	s.SendData(c, urls)
+}
 func (s *Api) decode(c *gin.Context) {
 	// var code = c.Query("code")
 

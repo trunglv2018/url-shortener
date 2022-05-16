@@ -14,7 +14,7 @@ var conn driver.Connection
 var db driver.Database
 var col driver.Collection
 
-func ConnectDB(endpoint, uname, password string) {
+func ConnectDB(endpoint, uname, password, dbName string) {
 	var err error
 	conn, err = http.NewConnection(http.ConnectionConfig{
 		Endpoints: []string{endpoint},
@@ -29,7 +29,7 @@ func ConnectDB(endpoint, uname, password string) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	db, err = client.Database(context.TODO(), "shortenlink")
+	db, err = client.Database(context.TODO(), dbName)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -43,10 +43,29 @@ type Table struct {
 	driver.Collection
 }
 
+const ErrCollectionNotFound = "collection or view not found"
+
 func NewTable(name string, prefix string) *Table {
+	// db.CreateCollection(context.TODO(), name, &driver.CreateCollectionOptions{
+	// 	KeyOptions: &driver.CollectionKeyOptions{
+	// 		Type: &driver.KeyGeneratorAutoIncrement,
+	// 	},
+	// })
 	col, err := db.Collection(context.TODO(), name)
 	if err != nil {
-		log.Fatal(err)
+		if err.Error() == ErrCollectionNotFound {
+			col, err = db.CreateCollection(context.TODO(), name, &driver.CreateCollectionOptions{
+				KeyOptions: &driver.CollectionKeyOptions{
+					Type: driver.KeyGeneratorAutoIncrement,
+				},
+			})
+			if err != nil {
+				log.Fatal(err)
+			}
+		} else {
+			log.Fatal(err)
+		}
+
 	}
 	return &Table{
 		Name:       name,
@@ -81,4 +100,20 @@ func (table *Table) FindWhere(filter map[string]string, result interface{}) erro
 	}
 	defer cursor.Close()
 	return nil
+}
+
+func (table *Table) Increase(docKey, field string) error {
+	var let = fmt.Sprintf(`
+		LET doc = DOCUMENT("%s/%s")
+	`, table.Name, docKey)
+	var update = fmt.Sprintf(`
+		UPDATE doc WITH {%s: doc.%s + 1 } IN %s
+	`, field, field, table.Name)
+	var query = fmt.Sprintf(`
+		%s
+		%s
+	`, let, update)
+	_, err := db.Query(context.TODO(), query, nil)
+	return err
+
 }

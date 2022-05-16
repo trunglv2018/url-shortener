@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 	"url-shortener/helpers/db"
+	"url-shortener/migration"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -45,5 +46,8 @@ func initDB() {
 	var endpoint = GetConfig().GetString("arrango_db.endpoint")
 	var uname = GetConfig().GetString("arrango_db.uname")
 	var password = GetConfig().GetString("arrango_db.password")
-	db.ConnectDB(endpoint, uname, password)
+	var dbName = GetConfig().GetString("arrango_db.db")
+	// var tables = GetConfig().GetStringSlice("arrango_db.tables")
+	migration.Migrate(endpoint, uname, password, dbName)
+	db.ConnectDB(endpoint, uname, password, dbName)
 }

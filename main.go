@@ -2,7 +2,11 @@ package main
 
 import (
 	//1.load firstly
+
 	"url-shortener/config"
+	"url-shortener/middleware"
+	"url-shortener/model"
+
 	//2.
 	"context"
 	"log"
@@ -15,6 +19,7 @@ import (
 	"url-shortener/api"
 
 	"github.com/gin-gonic/gin"
+	"github.com/trunglen/g/x/rest"
 )
 
 // func main() {
@@ -39,9 +44,11 @@ import (
 
 // }
 func main() {
-
 	router := gin.Default()
+	router.Use(middleware.Recovery())
 	api.NewApi(router.Group("api/v1"))
+	router.GET("/p/:id", payloadHandler)
+	router.GET("/:id", redirectHandler)
 	srv := &http.Server{
 		Addr:    ":" + config.GetConfig().GetString("server.port"),
 		Handler: router,
@@ -68,4 +75,22 @@ func main() {
 		log.Fatal("Server Shutdown: ", err)
 	}
 	log.Println("Server exiting")
+}
+
+func redirectHandler(c *gin.Context) {
+	var linkID, _ = c.Params.Get("id")
+	var shortLink, err = new(model.Link).GetByCode(linkID)
+	rest.AssertNil(err)
+	rest.AssertNil(shortLink.Visit())
+	c.Redirect(301, shortLink.LongLink)
+}
+
+func payloadHandler(c *gin.Context) {
+	var linkID, _ = c.Params.Get("id")
+	var shortLink, err = new(model.Link).GetByCode(linkID)
+	rest.AssertNil(err)
+	c.JSON(200, map[string]interface{}{
+		"data":   shortLink.Payload,
+		"status": "success",
+	})
 }
